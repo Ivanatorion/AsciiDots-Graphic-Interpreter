@@ -16,8 +16,8 @@ public class LoadSave {
 	public static Program readProgramFromFileSystem(Stage wind) throws IOException{
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Open AsciiDots Program");
-		File file = fileChooser.showOpenDialog(wind);
-		//File file = new File("C:\\Users\\Peter\\Documents\\Devcpp\\AsciiDots\\ex1.txt");
+		//File file = fileChooser.showOpenDialog(wind);
+		File file = new File("C:\\Users\\Peter\\Documents\\Devcpp\\AsciiDots\\ex1.txt");
 		
 		BufferedReader br = new BufferedReader(new FileReader(file)); 
 		

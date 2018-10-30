@@ -1,6 +1,8 @@
 package interpreter;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -25,6 +27,8 @@ import javafx.stage.Stage;
 
 public class MainClass extends Application {
 
+	boolean isRunning;
+	
 	Stage wind;
 	Program prog;
 	
@@ -49,8 +53,7 @@ public class MainClass extends Application {
 	final KeyCodeCombination runProgKCC = new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN);
 	final KeyCodeCombination changeDelayKCC = new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN);
 	
-	//Output
-	VBox outputBox;
+	static VBox outputBox;
 	private static final Font outputFont = new Font("Verdana", 14);
 	
 	//Controls
@@ -66,6 +69,9 @@ public class MainClass extends Application {
        public void handle(KeyEvent e) { 
           if(stepProgKCC.match(e)){
         	  if(prog != null) stepProgram();
+          }
+          if(runProgKCC.match(e)){
+        	  if(prog != null) runProgram();
           }
        } 
     };
@@ -95,7 +101,7 @@ public class MainClass extends Application {
 		
 	}
 	
-	public void outputStringLine(String line){
+	public static void outputStringLine(String line){
 		Label newLineLabel = new Label(line);
 		newLineLabel.setFont(outputFont);
 		outputBox.getChildren().add(newLineLabel);
@@ -105,12 +111,24 @@ public class MainClass extends Application {
 		
 	}
 	
+	public void runProgram(){
+		runProgram.setDisable(true);
+		stepProgram.setDisable(true);
+		isRunning = true;
+	}
+	
 	public void stepProgram(){
-		prog.step();
+		if(!prog.step()) {
+			isRunning = false;
+			runProgram.setDisable(false);
+			stepProgram.setDisable(false);
+		}
 	}
 	
 	@Override
 	public void start(Stage arg) throws Exception {
+		isRunning = false;
+		
 		wind = arg;
 		wind.setTitle("AsciiDots Interpreter");
 		
@@ -141,6 +159,7 @@ public class MainClass extends Application {
 		runProgram = new MenuItem("Run");
 		runProgram.setAccelerator(runProgKCC);
 		runProgram.setDisable(true);
+		runProgram.setOnAction(e -> runProgram());
 		
 		fileMenu.getItems().add(openFile);
 		fileMenu.getItems().add(new SeparatorMenuItem());

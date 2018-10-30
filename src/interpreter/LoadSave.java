@@ -16,8 +16,7 @@ public class LoadSave {
 	public static Program readProgramFromFileSystem(Stage wind) throws IOException{
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Open AsciiDots Program");
-		//File file = fileChooser.showOpenDialog(wind);
-		File file = new File("C:\\Users\\Peter\\Documents\\Devcpp\\AsciiDots\\ex1.txt");
+		File file = fileChooser.showOpenDialog(wind);
 		
 		BufferedReader br = new BufferedReader(new FileReader(file)); 
 		
@@ -50,10 +49,10 @@ public class LoadSave {
 		for(int y = 0; y < lines.size(); y++){
 			for(int x = 0; x < lines.get(y).length(); x++){
 				l[y][x] = new Label(Character.toString(lines.get(y).charAt(x)));
-				l[y][x].setMinHeight(16);
-				l[y][x].setMinWidth(10);
-				l[y][x].setMaxHeight(16);
-				l[y][x].setMaxWidth(10);
+				l[y][x].setMinHeight(18);
+				l[y][x].setMinWidth(12);
+				l[y][x].setMaxHeight(18);
+				l[y][x].setMaxWidth(12);
 				//l[y][x].setFont(new Font("SansSerif", 15));
 				
 				for(Warp w : warps){

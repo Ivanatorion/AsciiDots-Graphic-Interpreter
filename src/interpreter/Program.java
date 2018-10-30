@@ -68,18 +68,159 @@ public class Program {
 						matrix[y][x].setTextFill(Color.RED);
 					}
 				}
+				else {
+					matrix[y][x].setTextFill(Color.BLACK);
+				}
 			}
 		}
 		
 	}
 	
+	/*
+	Flows the dot in pipes
+	nextX and nextY must be pipes! (-, |, /, \)
+	Return true if killed dot
+	*/
+	private boolean stepDot(Dot curDot, int nextX, int nextY) {
+		char c = charMatrix[nextY][nextX];
+		//int cy = curDot.getPosY();
+		//int cx = curDot.getPosX();
+		curDot.setPosX(nextX);
+		curDot.setPosY(nextY);
+		switch(c) {
+			case '-':
+				if(!(curDot.getDir() == Direction.LEFT || curDot.getDir() == Direction.RIGHT)){
+					dots.remove(curDot);
+					return true;
+				}
+				break;
+			case '|':
+				if(!(curDot.getDir() == Direction.UP || curDot.getDir() == Direction.DOWN)){
+					dots.remove(curDot);
+					return true;
+				}
+				break;
+			case '\\':
+				switch(curDot.getDir()) {
+					case UP:
+						curDot.setDir(Direction.LEFT);
+						break;
+					case DOWN:
+						curDot.setDir(Direction.RIGHT);
+						break;
+					case LEFT:
+						curDot.setDir(Direction.UP);
+						break;
+					case RIGHT:
+						curDot.setDir(Direction.DOWN);
+						break;
+				}
+				break;
+			case '/':
+				switch(curDot.getDir()) {
+					case UP:
+						curDot.setDir(Direction.RIGHT);
+						break;
+					case DOWN:
+						curDot.setDir(Direction.LEFT);
+						break;
+					case LEFT:
+						curDot.setDir(Direction.DOWN);
+						break;
+					case RIGHT:
+						curDot.setDir(Direction.RIGHT);
+						break;
+				}
+				break;
+			case ' ':
+				dots.remove(curDot);
+				return true;
+				//break;
+		}
+		return false;
+	}
+	
+	private void setDotPrinting(Dot curDot) {
+		int nextX = 0, nextY = 0;
+		int cx = curDot.getPosX();
+		int cy = curDot.getPosY();
+		switch(curDot.getDir()) {	
+			case UP:
+				nextX = cx;
+				nextY = cy - 1;
+				break;
+			case DOWN:
+				nextX = cx;
+				nextY = cy + 1;
+				break;
+			case LEFT:
+				nextX = cx - 1;
+				nextY = cy;
+				break;
+			case RIGHT:
+				nextX = cx + 1;
+				nextY = cy;
+				break;
+		}
+		if(!(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length)){
+			switch(charMatrix[nextY][nextX]) {
+				case '#':
+					curDot.setPrintValueNextCicle(true);
+					break;
+			}
+		}
+		
+	}
+	
+	private void setDotValue(Dot curDot) {
+		int nextX = 0, nextY = 0;
+		int newValue = 0;
+		int cx = curDot.getPosX();
+		int cy = curDot.getPosY();
+		int incX = 0, incY = 0;
+		switch(curDot.getDir()) {	
+			case UP:
+				nextX = cx;
+				nextY = cy - 1;
+				incY = -1;
+				break;
+			case DOWN:
+				nextX = cx;
+				nextY = cy + 1;
+				incY = 1;
+				break;
+			case LEFT:
+				nextX = cx - 1;
+				nextY = cy;
+				incX = -1;
+				break;
+			case RIGHT:
+				nextX = cx + 1;
+				nextY = cy;
+				incX = 1;
+				break;
+		}
+		while(!(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length) && charMatrix[nextY][nextX] >= '0' && charMatrix[nextY][nextX] <= '9') {
+			newValue = newValue * 10;
+			newValue = newValue + charMatrix[nextY][nextX] - '0';
+			nextX = nextX + incX;
+			nextY = nextY + incY;
+		}
+		curDot.setValue(newValue);
+	}
+	
 	//Returns false if program ended
 	public boolean step(){
 		int cx, cy, nextX = 0, nextY = 0;
+		char c;
 		Dot curDot;
 		
 		for(int x = 0; x < dots.size(); x++){
 			curDot = dots.get(x);
+			
+			if(curDot.isFrozen())
+				continue;
+			
 			cx = curDot.getPosX();
 			cy = curDot.getPosY();
 			switch(curDot.getDir()){
@@ -100,37 +241,51 @@ public class Program {
 					nextY = cy;
 					break;
 			}
+			
+			matrix[cy][cx].setTextFill(Color.BLACK);
 			if(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length){
 				dots.remove(x);
 				x--;
 				continue;
 			}
-			switch(charMatrix[nextY][nextX]){
-				case '-':
-					if(curDot.getDir() == Direction.LEFT || curDot.getDir() == Direction.RIGHT){
-						curDot.setPosX(nextX);
-						curDot.setPosY(nextY);
-						matrix[cy][cx].setTextFill(Color.BLACK);
-						matrix[nextY][nextX].setTextFill(Color.RED);
-					}
-					break;
-				case '|':
-					if(curDot.getDir() == Direction.UP || curDot.getDir() == Direction.UP){
-						curDot.setPosX(nextX);
-						curDot.setPosY(nextY);
-						matrix[cy][cx].setTextFill(Color.BLACK);
-						matrix[nextY][nextX].setTextFill(Color.RED);
-					}
-					break;
-				default:
-					dots.remove(x);
-					matrix[cy][cx].setTextFill(Color.BLACK);
-					x--;
-					continue;
+			
+			if(stepDot(curDot, nextX, nextY)) {
+				x--;
+				continue;
 			}
+			else {
+				matrix[nextY][nextX].setTextFill(Color.RED);
+			}
+			
+			c = charMatrix[nextY][nextX];
+			switch(c){
+				case '#':
+					if(curDot.isPrintingValue()) {
+						curDot.setPrintValueNextCicle(false);
+						String line;
+						if(Math.abs((curDot.getValue() - (int) curDot.getValue())) < 0.00001) {
+							line = Integer.toString((int) curDot.getValue());
+						}
+						else {
+							line = Double.toString(curDot.getValue());
+						}
+						MainClass.outputStringLine(line);
+					}
+					else {
+						setDotValue(curDot);
+					}
+					break;
+				case '$':
+					setDotPrinting(curDot);
+					break;
+			}
+			
 		}
 		
-		return true;
+		if(dots.isEmpty())
+			return false;
+		else
+			return true;
 	}
 	
 	Program(Label[][] m, List<Warp> w){

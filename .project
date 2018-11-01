@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>src/images/AsciiDotsIcon.png</name>
+			<type>1</type>
+			<location>C:/Users/Peter/workspace/AsciiDotsInterpreter/src/images/AsciiDotsIcon.png</location>
+		</link>
+	</linkedResources>
 </projectDescription>

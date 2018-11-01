@@ -1,23 +1,25 @@
 package interpreter;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -27,6 +29,8 @@ import javafx.stage.Stage;
 
 public class MainClass extends Application {
 
+	private static final int DEFAULT_DELAY = 300;
+	
 	boolean isRunning;
 	
 	Stage wind;
@@ -47,6 +51,8 @@ public class MainClass extends Application {
 	
 	Menu settingsMenu;
 	MenuItem mDelay;
+	
+	Timer progLoop;
 	
 	//KeyComb
 	final KeyCodeCombination stepProgKCC = new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN);
@@ -96,7 +102,7 @@ public class MainClass extends Application {
 			runProgram.setDisable(false);
 			stepProgram.setDisable(false);
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 	}
@@ -112,9 +118,24 @@ public class MainClass extends Application {
 	}
 	
 	public void runProgram(){
+		if(isRunning)
+			return;
+		
 		runProgram.setDisable(true);
 		stepProgram.setDisable(true);
 		isRunning = true;
+		progLoop = new Timer();
+		progLoop.scheduleAtFixedRate(new TimerTask() {
+	        @Override
+	        public void run() {
+	        	javafx.application.Platform.runLater(new Runnable() {
+	                @Override
+	                public void run() {
+	                    stepProgram();
+	                }
+	            });
+	        }
+	    }, 0, DEFAULT_DELAY);
 	}
 	
 	public void stepProgram(){
@@ -122,6 +143,13 @@ public class MainClass extends Application {
 			isRunning = false;
 			runProgram.setDisable(false);
 			stepProgram.setDisable(false);
+			
+			progLoop.cancel();
+			prog.reset();
+			
+			Alert alert = new Alert(AlertType.NONE, "Program Ended", ButtonType.OK);
+			alert.setTitle("End");
+			alert.showAndWait();
 		}
 	}
 	
@@ -186,6 +214,7 @@ public class MainClass extends Application {
 		Scene scene = new Scene(layout, 200, 200);
 		wind.setScene(scene);
 		
+		wind.getIcons().add(new Image(MainClass.class.getResourceAsStream("/images/AsciiDotsIcon.png")));
 		wind.show();
 		
 	}

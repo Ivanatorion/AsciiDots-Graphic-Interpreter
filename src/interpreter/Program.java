@@ -3,6 +3,7 @@ package interpreter;
 import java.util.ArrayList;
 import java.util.List;
 
+import interpreter.Operation.OpName;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 
@@ -12,9 +13,7 @@ public class Program {
 	private Label[][] matrix;
 	private List<Warp> warps;
 	private List<Dot> dots;
-	
-	
-	public enum Direction {UP, DOWN, LEFT, RIGHT};
+	private List<Operation> opList;
 	
 	public Label[][] getCurrentLabelMatrix(){
 		return matrix;
@@ -45,17 +44,59 @@ public class Program {
 		return cmtx;
 	}
 	
+	private void checkOperationCell(int x, int y){
+		char c;
+		if(x < charMatrix[0].length-1 && y < charMatrix.length-1 && y > 0 && x > 0 && (charMatrix[y][x-1] == '[' && charMatrix[y][x+1] == ']' || charMatrix[y][x-1] == '{' && charMatrix[y][x+1] == '}')){
+			c = charMatrix[y][x];
+			OpName op;
+			switch(c){
+				case '+':
+					op = OpName.ADD;
+					break;
+				case '-':
+					op = OpName.SUB;
+					break;
+				case '*':
+					op = OpName.MULT;
+					break;
+				case '/':
+					op = OpName.DIV;
+					break;
+				case '=':
+					op = OpName.EQUAL;
+					break;
+				case '<':
+					op = OpName.LESSER;
+					break;
+				case '>':
+					op = OpName.GREATER;
+					break;
+				case 'L':
+					op = OpName.LEQUAL;
+					break;
+				case 'G':
+					op = OpName.GEQUAL;
+					break;
+				default:
+					return;
+			}
+			Operation newOp = new Operation(charMatrix[y][x-1] == '{', op, x, y);
+			opList.add(newOp);
+		}
+	}
+	
 	public void reset(){
 		dots.clear();
-		
-		for(int y = 0; y < matrix.length; y++){
+		opList.clear();
+	
+		for(int y = 0; y < matrix.length; y++){	
 			for(int x = 0; x < matrix[0].length; x++){
 				if(matrix[y][x].getText().charAt(0) == '.'){
 					if(y != 0 && matrix[y-1][x].getText().charAt(0) == '|'){
 						dots.add(new Dot(0.0, x, y, Direction.UP));
 						matrix[y][x].setTextFill(Color.RED);
 					}
-					else if(y != matrix.length && matrix[y+1][x].getText().charAt(0) == '|'){
+					else if(y != matrix.length-1 && matrix[y+1][x].getText().charAt(0) == '|'){
 						dots.add(new Dot(0.0, x, y, Direction.UP));
 						matrix[y][x].setTextFill(Color.RED);
 					}
@@ -70,10 +111,20 @@ public class Program {
 				}
 				else {
 					matrix[y][x].setTextFill(Color.BLACK);
+					checkOperationCell(x,y);
 				}
 			}
+			
 		}
 		
+	}
+	
+	private boolean isOperationAt(int x, int y){
+		for(int i = 0; i < opList.size(); i++){
+			if(opList.get(i).getPosX() == x && opList.get(i).getPosY() == y)
+				return true;
+		}
+		return false;
 	}
 	
 	/*
@@ -89,9 +140,11 @@ public class Program {
 		curDot.setPosY(nextY);
 		switch(c) {
 			case '-':
-				if(!(curDot.getDir() == Direction.LEFT || curDot.getDir() == Direction.RIGHT)){
-					dots.remove(curDot);
-					return true;
+				if(!isOperationAt(curDot.getPosX(), curDot.getPosY())){
+					if(!(curDot.getDir() == Direction.LEFT || curDot.getDir() == Direction.RIGHT)){
+						dots.remove(curDot);
+						return true;
+					}
 				}
 				break;
 			case '|':
@@ -117,19 +170,21 @@ public class Program {
 				}
 				break;
 			case '/':
-				switch(curDot.getDir()) {
-					case UP:
-						curDot.setDir(Direction.RIGHT);
-						break;
-					case DOWN:
-						curDot.setDir(Direction.LEFT);
-						break;
-					case LEFT:
-						curDot.setDir(Direction.DOWN);
-						break;
-					case RIGHT:
-						curDot.setDir(Direction.RIGHT);
-						break;
+				if(!isOperationAt(curDot.getPosX(), curDot.getPosY())){
+					switch(curDot.getDir()) {
+						case UP:
+							curDot.setDir(Direction.RIGHT);
+							break;
+						case DOWN:
+							curDot.setDir(Direction.LEFT);
+							break;
+						case LEFT:
+							curDot.setDir(Direction.DOWN);
+							break;
+						case RIGHT:
+							curDot.setDir(Direction.UP);
+							break;
+					}
 				}
 				break;
 			case ' ':
@@ -214,6 +269,7 @@ public class Program {
 		int cx, cy, nextX = 0, nextY = 0;
 		char c;
 		Dot curDot;
+		List<Dot> dotsToAddAtEnd = new ArrayList<Dot>();
 		
 		for(int x = 0; x < dots.size(); x++){
 			curDot = dots.get(x);
@@ -278,9 +334,23 @@ public class Program {
 				case '$':
 					setDotPrinting(curDot);
 					break;
+				case '&':
+					dots.clear();
+					return false;
+			}
+			
+			for(int i = 0; i < opList.size(); i++){
+				if(nextX == opList.get(i).getPosX() && nextY == opList.get(i).getPosY()){
+					Dot newD = opList.get(i).insert(curDot);
+					dots.remove(x);
+					x--;
+					if(newD != null) dotsToAddAtEnd.add(newD);
+				}
 			}
 			
 		}
+		
+		dots.addAll(dotsToAddAtEnd);
 		
 		if(dots.isEmpty())
 			return false;
@@ -290,6 +360,7 @@ public class Program {
 	
 	Program(Label[][] m, List<Warp> w){
 		dots = new ArrayList<Dot>();
+		opList = new ArrayList<Operation>();
 		matrix = m;
 		warps = w;
 		charMatrix = this.getCharMatrix();

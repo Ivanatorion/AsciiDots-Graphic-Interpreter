@@ -1,7 +1,5 @@
 package interpreter;
 
-import interpreter.Program.Direction;
-
 public class Dot {
 
 	private double value;

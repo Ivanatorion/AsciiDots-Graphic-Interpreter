@@ -8,6 +8,9 @@ public class Dot {
 	private Direction dir;
 	private boolean frozen;
 	private boolean printValueNextCicle;
+	private boolean isLiteralPrinting;
+	private boolean isBufferedPrinting;
+	private String bufferedString;
 	
 	Dot(double v, int px, int py, Direction d){
 		this.posX = px;
@@ -16,6 +19,13 @@ public class Dot {
 		this.dir = d;
 		this.frozen = false;
 		this.printValueNextCicle = false;
+		this.isLiteralPrinting = false;
+		this.isBufferedPrinting = false;
+		this.bufferedString = "";
+	}
+	
+	public void addToBufferedString(char c){
+		this.bufferedString = this.bufferedString + c;
 	}
 
 	public double getValue() {
@@ -64,6 +74,28 @@ public class Dot {
 	
 	public void setPrintValueNextCicle(boolean ptvnc) {
 		this.printValueNextCicle = ptvnc;
+	}
+	
+	public boolean isLiteralPrinting() {
+		return isLiteralPrinting;
+	}
+	
+	public void setLiteralPrinting(boolean iltp) {
+		this.isLiteralPrinting = iltp;
+	}
+	
+	public boolean isBufferedPrinting() {
+		return isBufferedPrinting;
+	}
+	
+	public void setBufferedlPrinting(boolean ibfp) {
+		this.isBufferedPrinting = ibfp;
+	}
+	
+	public String popBufferedString(){
+		String result = this.bufferedString;
+		this.bufferedString = "";
+		return result;
 	}
 	
 }

@@ -46,7 +46,7 @@ public class Program {
 	
 	private void checkOperationCell(int x, int y){
 		char c;
-		if(x < charMatrix[0].length-1 && y < charMatrix.length-1 && y > 0 && x > 0 && (charMatrix[y][x-1] == '[' && charMatrix[y][x+1] == ']' || charMatrix[y][x-1] == '{' && charMatrix[y][x+1] == '}')){
+		if(x < charMatrix[0].length-1 && y < charMatrix.length-1 && y > 0 && x > 0 && (charMatrix[y][x] == '~' || charMatrix[y][x-1] == '[' && charMatrix[y][x+1] == ']' || charMatrix[y][x-1] == '{' && charMatrix[y][x+1] == '}')){
 			c = charMatrix[y][x];
 			OpName op;
 			switch(c){
@@ -77,10 +77,13 @@ public class Program {
 				case 'G':
 					op = OpName.GEQUAL;
 					break;
+				case '~':
+					op = OpName.IF_THEN_ELSE;
+					break;
 				default:
 					return;
 			}
-			Operation newOp = new Operation(charMatrix[y][x-1] == '{', op, x, y);
+			Operation newOp = new Operation(charMatrix[y][x-1] != '[', op, x, y);
 			opList.add(newOp);
 		}
 	}
@@ -127,6 +130,15 @@ public class Program {
 		return false;
 	}
 	
+	private Warp getWarpAt(int x, int y){
+		for(int i = 0; i < warps.size(); i++){
+			if(warps.get(i).getX1() == x && warps.get(i).getY1() == y || warps.get(i).getX2() == x && warps.get(i).getY2() == y){
+				return warps.get(i);
+			}
+		}
+		return null;
+	}
+	
 	/*
 	Flows the dot in pipes
 	nextX and nextY must be pipes! (-, |, /, \)
@@ -134,10 +146,22 @@ public class Program {
 	*/
 	private boolean stepDot(Dot curDot, int nextX, int nextY) {
 		char c = charMatrix[nextY][nextX];
-		//int cy = curDot.getPosY();
-		//int cx = curDot.getPosX();
 		curDot.setPosX(nextX);
 		curDot.setPosY(nextY);
+		
+		if(curDot.isLiteralPrinting()){
+			if(!(charMatrix[nextY][nextX] == 39)){
+				MainClass.outputStringCurLine(Character.toString(charMatrix[nextY][nextX]));
+			}
+			return false;
+		}
+		if(curDot.isBufferedPrinting()){
+			if(!(charMatrix[nextY][nextX] == 34)){
+				curDot.addToBufferedString(charMatrix[nextY][nextX]);
+			}
+			return false;
+		}
+		
 		switch(c) {
 			case '-':
 				if(!isOperationAt(curDot.getPosX(), curDot.getPosY())){
@@ -187,11 +211,66 @@ public class Program {
 					}
 				}
 				break;
+			case '>':
+				if(!isOperationAt(curDot.getPosX(), curDot.getPosY()) && curDot.getDir() != Direction.LEFT)
+					curDot.setDir(Direction.RIGHT);
+				break;
+			case '<':
+				if(!isOperationAt(curDot.getPosX(), curDot.getPosY()) && curDot.getDir() != Direction.RIGHT)
+					curDot.setDir(Direction.LEFT);
+				break;
+			case 'v':
+				if(curDot.getDir() != Direction.UP)
+					curDot.setDir(Direction.DOWN);
+				break;
+			case '^':
+				if(curDot.getDir() != Direction.DOWN)
+					curDot.setDir(Direction.UP);
+				break;
+			case '~':
+				if(curDot.getDir() == Direction.DOWN){
+					dots.remove(curDot);
+					return true;
+				}
+				break;
+			case ')':
+				if(curDot.getDir() == Direction.RIGHT)
+					curDot.setDir(Direction.LEFT);
+				break;
+			case '(':
+				if(curDot.getDir() == Direction.LEFT)
+					curDot.setDir(Direction.RIGHT);
+				break;
+			case ';':
+				if(Math.abs(curDot.getValue()-1) < 0.0001){
+					dots.remove(curDot);
+					return true;
+				}
+				break;
+			case ':':
+				if(Math.abs(curDot.getValue()) < 0.0001){
+					dots.remove(curDot);
+					return true;
+				}
+				break;
 			case ' ':
 				dots.remove(curDot);
 				return true;
 				//break;
 		}
+		
+		Warp w = getWarpAt(curDot.getPosX(), curDot.getPosY());
+		if(w != null){
+			if(w.getX1() == curDot.getPosX() && w.getY1() == curDot.getPosY()){
+				curDot.setPosX(w.getX2());
+				curDot.setPosY(w.getY2());
+			}
+			else{
+				curDot.setPosX(w.getX1());
+				curDot.setPosY(w.getY1());
+			}
+		}
+		
 		return false;
 	}
 	
@@ -255,6 +334,13 @@ public class Program {
 				incX = 1;
 				break;
 		}
+		
+		if(!(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length) && charMatrix[nextY][nextX] == '?'){
+			newValue = MainClass.getUserInputValue();
+			curDot.setValue(newValue);
+			return;
+		}
+		
 		while(!(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length) && charMatrix[nextY][nextX] >= '0' && charMatrix[nextY][nextX] <= '9') {
 			newValue = newValue * 10;
 			newValue = newValue + charMatrix[nextY][nextX] - '0';
@@ -298,7 +384,11 @@ public class Program {
 					break;
 			}
 			
-			matrix[cy][cx].setTextFill(Color.BLACK);
+			if(getWarpAt(cx,cy) == null)
+				matrix[cy][cx].setTextFill(Color.BLACK);
+			else
+				matrix[cy][cx].setTextFill(Color.DARKBLUE);
+			
 			if(nextY < 0 || nextY == charMatrix.length || nextX < 0 || nextX == charMatrix[0].length){
 				dots.remove(x);
 				x--;
@@ -310,33 +400,67 @@ public class Program {
 				continue;
 			}
 			else {
-				matrix[nextY][nextX].setTextFill(Color.RED);
+				matrix[curDot.getPosY()][curDot.getPosX()].setTextFill(Color.RED);
 			}
 			
 			c = charMatrix[nextY][nextX];
-			switch(c){
-				case '#':
-					if(curDot.isPrintingValue()) {
-						curDot.setPrintValueNextCicle(false);
-						String line;
-						if(Math.abs((curDot.getValue() - (int) curDot.getValue())) < 0.00001) {
-							line = Integer.toString((int) curDot.getValue());
+			if(curDot.isLiteralPrinting() == false && curDot.isBufferedPrinting() == false){
+				switch(c){
+					case '#':
+						if(curDot.isPrintingValue()) {
+							curDot.setPrintValueNextCicle(false);
+							String line;
+							if(Math.abs((curDot.getValue() - (int) curDot.getValue())) < 0.00001) {
+								line = Integer.toString((int) curDot.getValue());
+							}
+							else {
+								line = Double.toString(curDot.getValue());
+							}
+							MainClass.outputStringLine(line);
 						}
 						else {
-							line = Double.toString(curDot.getValue());
+							setDotValue(curDot);
 						}
-						MainClass.outputStringLine(line);
-					}
-					else {
-						setDotValue(curDot);
-					}
-					break;
-				case '$':
-					setDotPrinting(curDot);
-					break;
-				case '&':
-					dots.clear();
-					return false;
+						break;
+					case '$':
+						setDotPrinting(curDot);
+						break;
+					case '&':
+						dots.clear();
+						return false;
+					case '*':
+						if(!isOperationAt(nextX,nextY)){
+							switch(curDot.getDir()){
+								case UP:
+								case DOWN:
+									dotsToAddAtEnd.add(new Dot(curDot.getValue(), nextX, nextY, Direction.LEFT));
+									dotsToAddAtEnd.add(new Dot(curDot.getValue(), nextX, nextY, Direction.RIGHT));
+									break;
+								case LEFT:
+								case RIGHT:
+									dotsToAddAtEnd.add(new Dot(curDot.getValue(), nextX, nextY, Direction.UP));
+									dotsToAddAtEnd.add(new Dot(curDot.getValue(), nextX, nextY, Direction.DOWN));
+									break;
+							}
+						}
+						break;
+					case 34:
+						curDot.setBufferedlPrinting(true);
+						break;
+					case 39:
+						curDot.setLiteralPrinting(true);
+						break;
+				}
+			}
+			else{
+				if(c == 39 && curDot.isLiteralPrinting()){
+					curDot.setLiteralPrinting(false);
+					MainClass.outputStringCurLine("\n");
+				}
+				if(c == 34 && curDot.isBufferedPrinting()){
+					curDot.setBufferedlPrinting(false);
+					MainClass.outputStringLine(curDot.popBufferedString());
+				}
 			}
 			
 			for(int i = 0; i < opList.size(); i++){

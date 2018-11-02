@@ -49,11 +49,11 @@ public class LoadSave {
 		for(int y = 0; y < lines.size(); y++){
 			for(int x = 0; x < lines.get(y).length(); x++){
 				l[y][x] = new Label(Character.toString(lines.get(y).charAt(x)));
-				l[y][x].setMinHeight(18);
-				l[y][x].setMinWidth(12);
-				l[y][x].setMaxHeight(18);
-				l[y][x].setMaxWidth(12);
-				//l[y][x].setFont(new Font("SansSerif", 15));
+				l[y][x].setMinHeight(24);
+				l[y][x].setMinWidth(16);
+				l[y][x].setMaxHeight(24);
+				l[y][x].setMaxWidth(16);
+				l[y][x].setFont(new Font("Verdana", 16));
 				
 				for(Warp w : warps){
 					if(w.getC() == lines.get(y).charAt(x)){

@@ -10,7 +10,7 @@ public class Operation {
 	private int posY;
 	boolean outHori;
 	
-	public enum OpName {ADD, SUB, MULT, DIV, LESSER, EQUAL, GREATER, LEQUAL, GEQUAL};
+	public enum OpName {ADD, SUB, MULT, DIV, LESSER, EQUAL, GREATER, LEQUAL, GEQUAL, IF_THEN_ELSE};
 	
 	OpName operation;
 	
@@ -21,6 +21,10 @@ public class Operation {
 		this.horQ = new LinkedList<Dot>();
 		this.posX = pX;
 		this.posY = pY;
+	}
+	
+	private boolean floatEqual(double f1, double f2){
+		return Math.abs(f1 - f2) < 0.0001;
 	}
 	
 	private Dot operate(Dot vDot, Dot hDot){
@@ -58,13 +62,20 @@ public class Operation {
 				result = (firstOperand > secondOperand) ? 1 : 0;
 				break;
 			case EQUAL:
-				result = (firstOperand == secondOperand) ? 1 : 0;
+				result = (floatEqual(firstOperand, secondOperand)) ? 1 : 0;
 				break;
 			case GEQUAL:
-				result = (firstOperand >= secondOperand) ? 1 : 0;
+				result = (firstOperand > secondOperand || floatEqual(firstOperand, secondOperand)) ? 1 : 0;
 				break;
 			case LEQUAL:
-				result = (firstOperand <= secondOperand) ? 1 : 0;
+				result = (firstOperand < secondOperand || floatEqual(firstOperand, secondOperand)) ? 1 : 0;
+				break;
+			case IF_THEN_ELSE:
+				result = firstOperand;
+				if(Math.abs(secondOperand) < 0.00001)
+					dir = hDot.getDir();
+				else
+					dir = Direction.UP;
 				break;
 		}
 		
